@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Wall Calculator</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --input-bg: #333333;
+            --border-color: #444444;
+            --primary-color: #4CAF50;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 4px;
+        }
+
+        .user-input-section {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h2>LED Wall Calculator</h2>
+    
+    <div class="container">
+        <div>
+            <div class="input-group">
+                <label for="model">Panel Model:</label>
+                <select id="model" onchange="updateModel()">
+                    <option value="custom">Custom</option>
+                    <option value="P2.9">P2.9 (168×336 pixels)</option>
+                    <option value="P3.9">P3.9 (128×128 pixels)</option>
+                    <option value="P4">P4 (256×128 pixels)</option>
+                </select>
+            </div>
+
+            <div class="user-input-section">
+                <h3>Panel Specifications</h3>
+                <div class="input-group">
+                    <label>Panel Dimensions (pixels):</label>
+                    <input type="number" id="panelWidth" placeholder="Width" required>
+                    <input type="number" id="panelHeight" placeholder="Height" required>
+                </div>
+                <div class="input-group">
+                    <label>Pixel Pitch (mm):</label>
+                    <input type="number" id="pixelPitch" step="0.1" required>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="input-group">
+                <label for="unit">Wall Dimension Unit:</label>
+                <select id="unit">
+                    <option value="mm">Millimeters</option>
+                    <option value="feet">Feet</option>
+                    <option value="meters">Meters</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Wall Dimensions:</label>
+                <input type="number" id="wallWidth" placeholder="Width" required>
+                <input type="number" id="wallHeight" placeholder="Height" required>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="calculate()">Calculate</button>
+
+    <div id="result"></div>
+
+    <script>
+        function updateModel() {
+            const model = document.getElementById('model').value;
+            switch(model) {
+                case 'P2.9':
+                    document.getElementById('panelWidth').value = 168;
+                    document.getElementById('panelHeight').value = 336;
+                    document.getElementById('pixelPitch').value = 2.9;
+                    break;
+                case 'P3.9':
+                    document.getElementById('panelWidth').value = 128;
+                    document.getElementById('panelHeight').value = 128;
+                    document.getElementById('pixelPitch').value = 3.9;
+                    break;
+                case 'P4':
+                    document.getElementById('panelWidth').value = 256;
+                    document.getElementById('panelHeight').value = 128;
+                    document.getElementById('pixelPitch').value = 4;
+                    break;
+                default:
+                    document.getElementById('panelWidth').value = '';
+                    document.getElementById('panelHeight').value = '';
+                    document.getElementById('pixelPitch').value = '';
+            }
+        }
+
+        function convertToMM(value, unit) {
+            switch(unit) {
+                case 'feet': return value * 304.8;
+                case 'meters': return value * 1000;
+                default: return value;
+            }
+        }
+
+        function calculate() {
+            // Get panel specifications
+            const panelWidth = parseInt(document.getElementById('panelWidth').value);
+            const panelHeight = parseInt(document.getElementById('panelHeight').value);
+            const pixelPitch = parseFloat(document.getElementById('pixelPitch').value);
+            
+            // Get wall dimensions
+            const unit = document.getElementById('unit').value;
+            const wallWidth = parseFloat(document.getElementById('wallWidth').value);
+            const wallHeight = parseFloat(document.getElementById('wallHeight').value);
+
+            // Validate inputs
+            if (!panelWidth || !panelHeight || !pixelPitch || !wallWidth || !wallHeight) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            // Convert wall dimensions to millimeters
+            const wallWidthMM = convertToMM(wallWidth, unit);
+            const wallHeightMM = convertToMM(wallHeight, unit);
+
+            // Calculate total pixels needed
+            const totalPixelsWidth = wallWidthMM / pixelPitch;
+            const totalPixelsHeight = wallHeightMM / pixelPitch;
+
+            // Calculate number of panels needed
+            const panelsHorizontal = Math.ceil(totalPixelsWidth / panelWidth);
+            const panelsVertical = Math.ceil(totalPixelsHeight / panelHeight);
+            const totalPanels = panelsHorizontal * panelsVertical;
+
+            // Calculate aspect ratio
+            const aspectRatio = panelWidth/panelHeight;
+
+            // Display results
+            const result = document.getElementById('result');
+            result.innerHTML = `
+                <h3>Results:</h3>
+                <p>Horizontal Panels Needed: ${panelsHorizontal}</p>
+                <p>Vertical Panels Needed: ${panelsVertical}</p>
+                <p>Total Panels Required: ${totalPanels}</p>
+                <p>Panel Aspect Ratio: ${aspectRatio.toFixed(2)}:1</p>
+                <p>Wall Resolution: ${Math.round(panelsHorizontal * panelWidth)}×${Math.round(panelsVertical * panelHeight)} pixels</p>
+                <p>Physical Dimensions: ${(wallWidthMM/1000).toFixed(2)}m × ${(wallHeightMM/1000).toFixed(2)}m</p>
+            `;
+        }
+    </script>
+</body>
+</html>
